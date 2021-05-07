@@ -52,3 +52,22 @@ jobs:
         git fetch -a
         git cherry-pick $(git log origin/${{ fromJson(steps.get-source-pr.outputs.data).base.ref }}..origin/${{ fromJson(steps.get-source-pr.outputs.data).head.ref }} --format=%H)
         git push --force --set-upstream origin ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.split.outputs._1}}
+
+    - name: Create pull request from the new branch
+      uses: repo-sync/pull-request@v2.3
+      with: 
+        source_branch: ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.split.outputs._1}}
+        destination_branch: ${{ github.event.inputs.target-base-branch}}
+        pr_title: "🍒[${{steps.split.outputs._1}}] ${{ fromJson(steps.get-source-pr.outputs.data).title }}"
+        pr_body: |
+          ${{ fromJson(steps.get-source-pr.outputs.data).body }}
+
+          <i>
+          Automatically cherry-picked from #${{ github.event.inputs.PR-Number }}
+          Automation was ran by ${{ github.actor }}
+          </i>
+        pr_reviewer: join(${{ fromJson(steps.get-source-pr.outputs.data).requested_reviewers.*.login }})
+        pr_assignee: join(${{ fromJson(steps.get-source-pr.outputs.data).assignees.*.login }})
+        pr_label: join(${{ fromJson(steps.get-source-pr.outputs.data).labels.*.name }})
+        pr_allow_empty: false
+        github_token: ${{ secrets.GITHUB_TOKEN }}
