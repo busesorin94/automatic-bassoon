@@ -41,7 +41,7 @@ jobs:
       run: |
         git config user.email "action@github.com"
         git config user.name "GitHub Action"
-        git checkout -b ${{ steps.split.target-branch }}
+        git checkout -b ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.split.outputs._1}}
         git reset --HARD {{ github.event.inputs.target-base-branch }}
 
     - name: Attempt to cherry-pick all the changes from ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }} onto ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.split.outputs._1}}
