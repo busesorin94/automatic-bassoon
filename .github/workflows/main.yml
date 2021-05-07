@@ -50,6 +50,5 @@ jobs:
         git config user.email "action@github.com"
         git config user.name "GitHub Action"
         git fetch -a
-        git checkout ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.split.outputs._1}}
-        git cherry-pick $(git cherry ${{ fromJson(steps.get-source-pr.outputs.data).base.ref }} ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}  | grep "^\+")
+        git cherry-pick $(git cherry ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }} ${{ fromJson(steps.get-source-pr.outputs.data).base.ref }} | grep "^\+")
         git push --force --set-upstream origin ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.split.outputs._1}}
