@@ -1,0 +1,55 @@
+name: Auto cherry-pick
+
+on: 
+  workflow_dispatch:
+    inputs:
+      PR-Number:
+        description: 'The PR you want to cherry-pick'
+        required: true
+      target-base-branch:
+        description: 'The branch you want cherry-picked into the target branch'
+        required: true
+
+jobs:
+  cherry-pick-release:
+    name: Create cherry-pick PR
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Get source PR
+      id: get-source-pr
+      uses: octokit/request-action@v2.x
+      with:
+        route: GET /repos/UiPath/Orchestrator/pulls/${{ github.event.inputs.PR-Number }}
+      env:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+      
+    - name: Download repo and checkout ${{ github.event.inputs.target-base-branch}}
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.inputs.target-base-branch }}
+        fetch-depth: 500
+
+    - name: Get target branch name
+      uses: rishabhgupta/split-by@v1
+      id: split
+      with:
+        string: '${{ github.event.inputs.target-base-branch}}'
+        split-by: '/'
+
+    - name: Create/Update branch from ${{ github.event.inputs.target-base-branch }}
+      run: |
+        git config user.email "action@github.com"
+        git config user.name "GitHub Action"
+        git checkout -b ${{ steps.split.target-branch }}
+        git reset --HARD {{ github.event.inputs.target-base-branch }}
+
+    - name: Attempt to cherry-pick all the changes from ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }} onto ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.split.outputs._1}}
+      continue-on-error: false
+      run: |
+        git config user.email "action@github.com"
+        git config user.name "GitHub Action"
+        git fetch -a
+        git checkout ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.split.outputs._1}}
+        git cherry-pick $(git cherry ${{ fromJson(steps.get-source-pr.outputs.data).base.ref }} ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}  | grep "^\+")
+        git push --force --set-upstream origin ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.split.outputs._1}}
