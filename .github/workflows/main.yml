@@ -21,8 +21,7 @@ jobs:
       uses: octokit/request-action@v2.x
       with:
         route: GET /repos/UiPath/Orchestrator/pulls/${{ github.event.inputs.PR-Number }}
-      env:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
     - name: Download repo and checkout ${{ github.event.inputs.target-base-branch}}
       uses: actions/checkout@v2
@@ -38,6 +37,7 @@ jobs:
         split-by: '/'
 
     - name: Create/Update branch from ${{ github.event.inputs.target-base-branch }}
+      continue-on-error: false
       run: |
         git config user.email "action@github.com"
         git config user.name "GitHub Action"
