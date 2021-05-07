@@ -63,11 +63,11 @@ jobs:
           ${{ fromJson(steps.get-source-pr.outputs.data).body }}
 
           <i>
-          Automatically cherry-picked from #${{ github.event.inputs.PR-Number }}
-          Automation was ran by ${{ github.actor }}
+          Automatically cherry-picked from #${{ github.event.inputs.PR-Number }} <br>
+          Automation was ran by @${{ github.actor }}
           </i>
-        pr_reviewer: join(${{ fromJson(steps.get-source-pr.outputs.data).requested_reviewers.*.login }})
-        pr_assignee: join(${{ fromJson(steps.get-source-pr.outputs.data).assignees.*.login }})
-        pr_label: join(${{ fromJson(steps.get-source-pr.outputs.data).labels.*.name }})
+        pr_reviewer: ${{ join(fromJson(steps.get-source-pr.outputs.data).requested_reviewers.*.login) }}
+        pr_assignee: ${{ join(fromJson(steps.get-source-pr.outputs.data).assignees.*.login) }}
+        pr_label: ${{ join(fromJson(steps.get-source-pr.outputs.data).labels.*.name) }}
         pr_allow_empty: false
         github_token: ${{ secrets.GITHUB_TOKEN }}
