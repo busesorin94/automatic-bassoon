@@ -37,19 +37,18 @@ jobs:
         split-by: '/'
 
     - name: Replace dot with dashes in branch name
-      uses: mad9000/actions-find-and-replace-string@1
+      uses: bluwy/substitute-string-action@v1
       id: findandreplace
       with:
-        source: ${{ steps.split.outputs._1 }}
-        find: '.'
-        replace: '-'
+        _input-text: ${{ steps.split.outputs._1 }}
+        .: '-'
 
     - name: Create/Update branch from ${{ github.event.inputs.target-base-branch }}
       continue-on-error: false
       run: |
         git config user.email "action@github.com"
         git config user.name "GitHub Action"
-        git checkout -b ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.findandreplace.outputs.value}}
+        git checkout -b ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.findandreplace.outputs.result}}
         git reset --hard origin/${{ github.event.inputs.target-base-branch }}
 
     - name: Attempt to cherry-pick all the changes from ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }} onto ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.findandreplace.outputs.value}}
@@ -59,12 +58,12 @@ jobs:
         git config user.name "GitHub Action"
         git fetch -a
         git cherry-pick $(git log origin/${{ fromJson(steps.get-source-pr.outputs.data).base.ref }}..origin/${{ fromJson(steps.get-source-pr.outputs.data).head.ref }} --format=%H)
-        git push --force --set-upstream origin ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.findandreplace.outputs.value}}
+        git push --force --set-upstream origin ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.findandreplace.outputs.result}}
 
-    - name: Create pull request from ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.findandreplace.outputs.value}}
+    - name: Create pull request from ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.findandreplace.outputs.result}}
       uses: repo-sync/pull-request@v2.3
       with: 
-        source_branch: ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.findandreplace.outputs.value}}
+        source_branch: ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.findandreplace.outputs.result}}
         destination_branch: ${{ github.event.inputs.target-base-branch}}
         pr_title: "🍒[${{steps.split.outputs._1}}] ${{ fromJson(steps.get-source-pr.outputs.data).title }}"
         pr_body: |
