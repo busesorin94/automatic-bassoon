@@ -1,13 +1,13 @@
-name: Auto cherry-pick
+name: Auto release cherry-pick
 
 on: 
   workflow_dispatch:
     inputs:
       PR-Number:
-        description: 'The PR you want to cherry-pick'
+        description: 'The PR id you want to cherry-pick (e.g. 1608)'
         required: true
       target-base-branch:
-        description: 'The branch you want cherry-picked into the target branch'
+        description: 'The target branch (e.g. release/s60)'
         required: true
 
 jobs:
@@ -36,32 +36,41 @@ jobs:
         string: '${{ github.event.inputs.target-base-branch}}'
         split-by: '/'
 
+    - name: Replace dot with dashes in branch name
+      uses: mad9000/actions-find-and-replace-string@1
+      id: findandreplace
+      with:
+        source: ${{ steps.split.outputs._1 }}
+        find: '.'
+        replace: '-'
+
     - name: Create/Update branch from ${{ github.event.inputs.target-base-branch }}
       continue-on-error: false
       run: |
         git config user.email "action@github.com"
         git config user.name "GitHub Action"
-        git checkout -b ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.split.outputs._1}}
+        git checkout -b ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.findandreplace.outputs.value}}
         git reset --hard origin/${{ github.event.inputs.target-base-branch }}
 
-    - name: Attempt to cherry-pick all the changes from ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }} onto ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.split.outputs._1}}
+    - name: Attempt to cherry-pick all the changes from ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }} onto ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.findandreplace.outputs.value}}
       continue-on-error: false
       run: |
         git config user.email "action@github.com"
         git config user.name "GitHub Action"
         git fetch -a
         git cherry-pick $(git log origin/${{ fromJson(steps.get-source-pr.outputs.data).base.ref }}..origin/${{ fromJson(steps.get-source-pr.outputs.data).head.ref }} --format=%H)
-        git push --force --set-upstream origin ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.split.outputs._1}}
+        git push --force --set-upstream origin ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.findandreplace.outputs.value}}
 
-    - name: Create pull request from the new branch
+    - name: Create pull request from ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.findandreplace.outputs.value}}
       uses: repo-sync/pull-request@v2.3
       with: 
-        source_branch: ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.split.outputs._1}}
+        source_branch: ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.findandreplace.outputs.value}}
         destination_branch: ${{ github.event.inputs.target-base-branch}}
         pr_title: "🍒[${{steps.split.outputs._1}}] ${{ fromJson(steps.get-source-pr.outputs.data).title }}"
         pr_body: |
           ${{ fromJson(steps.get-source-pr.outputs.data).body }}
-
+          <br>
+          <br>
           <i>
           Automatically cherry-picked from #${{ github.event.inputs.PR-Number }} <br>
           Automation was ran by @${{ github.actor }}
