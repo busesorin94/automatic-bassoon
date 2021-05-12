@@ -33,7 +33,7 @@ jobs:
     - name: Download repo and checkout ${{ github.event.inputs.target-base-branch}}
       uses: actions/checkout@v2
       with:
-        ref: ${{ github.event.inputs.target-base-branch }}
+        ref: ${{ fromJson(steps.get-source-pr.outputs.data).base.ref }}
         fetch-depth: 500
 
     - name: Get target branch name
