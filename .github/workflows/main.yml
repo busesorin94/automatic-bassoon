@@ -64,7 +64,7 @@ jobs:
         git config user.email "action@github.com"
         git config user.name "GitHub Action"
         git fetch -a
-        git cherry-pick ${{ fromJson(steps.get-commits.outputs.data).*.sha }}
+        git cherry-pick ${{ join(fromJson(steps.get-commits.outputs.data).*.sha, ' ') }}
         git push --force --set-upstream origin ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.findandreplace.outputs.result}}
 
     - name: Create pull request from ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.findandreplace.outputs.result}}
