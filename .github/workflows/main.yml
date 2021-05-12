@@ -22,6 +22,13 @@ jobs:
       with:
         route: GET /repos/busesorin94/automatic-bassoon/pulls/${{ github.event.inputs.PR-Number }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Get commits for the pull requests
+      id: get-commits
+      uses: octokit/request-action@v2.x
+      with:
+        route: GET /repos/busesorin94/automatic-bassoon/pulls/${{ github.event.inputs.PR-Number }}/commits
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
     - name: Download repo and checkout ${{ github.event.inputs.target-base-branch}}
       uses: actions/checkout@v2
@@ -35,7 +42,7 @@ jobs:
       with:
         string: '${{ github.event.inputs.target-base-branch}}'
         split-by: '/'
-
+        
     - name: Replace dot with dashes in branch name
       uses: bluwy/substitute-string-action@v1
       id: findandreplace
@@ -51,13 +58,13 @@ jobs:
         git checkout -b ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.findandreplace.outputs.result}}
         git reset --hard origin/${{ github.event.inputs.target-base-branch }}
 
-    - name: Attempt to cherry-pick all the changes from ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }} onto ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.findandreplace.outputs.value}}
+    - name: Attempt to cherry-pick all the changes from ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }} onto ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.findandreplace.outputs.result}}
       continue-on-error: false
       run: |
         git config user.email "action@github.com"
         git config user.name "GitHub Action"
         git fetch -a
-        git cherry-pick $(git log origin/${{ fromJson(steps.get-source-pr.outputs.data).base.ref }}..origin/${{ fromJson(steps.get-source-pr.outputs.data).head.ref }} --format=%H)
+        git cherry-pick ${{ steps.fromJson(steps.get-commits.outputs.data).*.sha }}
         git push --force --set-upstream origin ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.findandreplace.outputs.result}}
 
     - name: Create pull request from ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.findandreplace.outputs.result}}
@@ -68,7 +75,6 @@ jobs:
         pr_title: "🍒[${{steps.split.outputs._1}}] ${{ fromJson(steps.get-source-pr.outputs.data).title }}"
         pr_body: |
           ${{ fromJson(steps.get-source-pr.outputs.data).body }}
-          <br>
           <br>
           <i>
           Automatically cherry-picked from #${{ github.event.inputs.PR-Number }} <br>
