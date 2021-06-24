@@ -71,8 +71,8 @@ jobs:
       id: get-source-reviewers
       continue-on-error: false
       run: |
-        reviewers = ${{ fromJson(steps.get-source-pr.outputs.data).requested_reviewers.*.login }}
-        team_reviewers = ${{ fromJson(steps.get-source-pr.outputs.data).requested_teams.*.login }}
+        reviewers = (${{ join(fromJson(steps.get-source-pr.outputs.data).requested_reviewers.*.login, ' ') }})
+        team_reviewers = ${{ join(fromJson(steps.get-source-pr.outputs.data).requested_teams.*.login, ' ') }}
         all_reviewers = ("${reviewers[@]}" "${team_reviewers[@]}")
         echo "::set-output name=reviewers::all_reviewers"
 
