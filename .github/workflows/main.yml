@@ -22,7 +22,7 @@ jobs:
       with:
         route: GET /repos/busesorin94/automatic-bassoon/pulls/${{ github.event.inputs.PR-Number }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+      
     - name: Get commits for the pull requests
       id: get-commits
       uses: octokit/request-action@v2.x
@@ -59,13 +59,22 @@ jobs:
         git fetch origin
         git reset --hard origin/${{ github.event.inputs.target-base-branch }}
 
-    - name: Attempt to cherry-pick all the changes from ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }} onto ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.findandreplace.outputs.result}}
+    - name: Attempt apply all the commits from ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }} to ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.findandreplace.outputs.result}}
       continue-on-error: false
       run: |
         git config user.email "action@github.com"
         git config user.name "GitHub Action"
         git cherry-pick ${{ join(fromJson(steps.get-commits.outputs.data).*.sha, ' ') }}
         git push --force --set-upstream origin ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.findandreplace.outputs.result}}
+
+    - name: Get reviewers
+      id: get-source-reviewers
+      continue-on-error: false
+      run: |
+        reviewers = (${{ fromJson(steps.get-source-pr.outputs.data).requested_reviewers.*.login }})
+        team_reviewers = (${{ fromJson(steps.get-source-pr.outputs.data).requested_teams.*.login }})
+        all_reviewers = ("${reviewers[@]}" "${team_reviewers[@]}")
+        echo "::set-output name=reviewers::all_reviewers"
 
     - name: Create pull request from ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.findandreplace.outputs.result}}
       uses: repo-sync/pull-request@v2.3
@@ -74,13 +83,13 @@ jobs:
         destination_branch: ${{ github.event.inputs.target-base-branch}}
         pr_title: "🍒[${{steps.split.outputs._1}}] ${{ fromJson(steps.get-source-pr.outputs.data).title }}"
         pr_body: |
-          ${{ fromJson(steps.get-source-pr.outputs.data).body }}
+          "${{ fromJson(steps.get-source-pr.outputs.data).body }}"
           <br>
           <i>
           Automatically cherry-picked from #${{ github.event.inputs.PR-Number }} <br>
           Automation was ran by @${{ github.actor }}
           </i>
-        pr_reviewer: ${{ join(fromJson(steps.get-source-pr.outputs.data).requested_reviewers.*.login) }}
+        pr_reviewer: ${{ join(get-source-reviewers) }}
         pr_assignee: ${{ join(fromJson(steps.get-source-pr.outputs.data).assignees.*.login) }}
         pr_label: ${{ join(fromJson(steps.get-source-pr.outputs.data).labels.*.name) }}
         pr_allow_empty: false
