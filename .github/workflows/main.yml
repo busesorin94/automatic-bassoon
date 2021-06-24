@@ -72,8 +72,8 @@ jobs:
       continue-on-error: false
       run: |
         declare -a reviewers=()
-        reviewers += (${{ fromJson(steps.get-source-pr.outputs.data).requested_teams.*.login }})
-        reviewers += (${{ fromJson(steps.get-source-pr.outputs.data).requested_reviewers.*.login }})
+        reviewers += ${{ fromJson(steps.get-source-pr.outputs.data).requested_teams.*.login }}
+        reviewers += ${{ fromJson(steps.get-source-pr.outputs.data).requested_reviewers.*.login }}
         echo "::set-output name=reviewers::reviewers"
 
     - name: Create pull request from ${{ fromJson(steps.get-source-pr.outputs.data).head.ref }}-${{steps.findandreplace.outputs.result}}
