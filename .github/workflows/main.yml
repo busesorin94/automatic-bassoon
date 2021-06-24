@@ -89,7 +89,7 @@ jobs:
           Automatically cherry-picked from #${{ github.event.inputs.PR-Number }} <br>
           Automation was ran by @${{ github.actor }}
           </i>
-        pr_reviewer: ${{ join(get-source-reviewers) }}
+        pr_reviewer: ${{ join(steps.get-source-reviewers) }}
         pr_assignee: ${{ join(fromJson(steps.get-source-pr.outputs.data).assignees.*.login) }}
         pr_label: ${{ join(fromJson(steps.get-source-pr.outputs.data).labels.*.name) }}
         pr_allow_empty: false
