@@ -20,14 +20,14 @@ jobs:
       id: get-source-pr
       uses: octokit/request-action@v2.x
       with:
-        route: GET /repos/busesorin94/automatic-bassoon/pulls/${{ github.event.inputs.PR-Number }}
+        route: GET /repos/srnbuse/automatic-bassoon/pulls/${{ github.event.inputs.PR-Number }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
     - name: Get commits for the pull requests
       id: get-commits
       uses: octokit/request-action@v2.x
       with:
-        route: GET /repos/busesorin94/automatic-bassoon/pulls/${{ github.event.inputs.PR-Number }}/commits
+        route: GET /repos/srnbuse/automatic-bassoon/pulls/${{ github.event.inputs.PR-Number }}/commits
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
     - name: Download repo and checkout ${{ github.event.inputs.target-base-branch}}
