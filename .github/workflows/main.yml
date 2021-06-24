@@ -83,7 +83,7 @@ jobs:
         destination_branch: ${{ github.event.inputs.target-base-branch}}
         pr_title: "🍒[${{steps.split.outputs._1}}] ${{ fromJson(steps.get-source-pr.outputs.data).title }}"
         pr_body: |
-          ${{ fromJson(steps.get-source-pr.outputs.data).body }}
+          '${{ fromJson(steps.get-source-pr.outputs.data).body }}'
           <br>
           <i>
           Automatically cherry-picked from #${{ github.event.inputs.PR-Number }} <br>
